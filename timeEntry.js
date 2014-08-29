@@ -1,14 +1,17 @@
-Date.prototype.addDays = function(days)
-{
+Date.prototype.addDays = function(days) {
     var dat = new Date(this.valueOf());
     dat.setDate(dat.getDate() + days);
     return dat;
 };
 
-var MetronomeParser = function(today) {
+Date.prototype.addMinutes = function(minutes) {
+	return new Date(this.getTime() + (minutes * 60000));
+};
 
-	this.today = (typeof(today) === "string")
-		? new Date(today)
+var MetronomeParser = function(now) {
+
+	this.now = (typeof(now) === "string")
+		? new Date(now)
 		: new Date();
 	
 	this.parse = function(text) {
@@ -26,10 +29,23 @@ var MetronomeParser = function(today) {
 			}
 		};
 		
+		var formatMMDDYYYY = function(date) {
+			return (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear();
+		};
+		
+		var padWithLeadingZeros = function(num, size) {
+			var s = num+"";
+			
+			while (s.length < size) 
+				s = "0" + s;
+			
+			return s;		
+		};
+		
 		var m = null;
 		
-		// Time given as range with no date. Use today's date.
-		// Ex: 9-915 
+		// Time given as a range with an optional day identifier. Uses TODAY if date not given
+		// Ex: 9-915 or M 900-1000
 		m = text.match(/^(SU|Su|su|SA|Sa|sa|[M|m|T|t|W|d|R|r|F|f]){0,1} ?([0-9]{1,4}[A|a|AM|am|P|p|PM|pm]{0,1})-([0-9]{1,4}[A|a|AM|am|P|p|PM|pm]{0,1})$/);
 		if (m) {
 			var dayOfWeek = m[1];
@@ -37,11 +53,11 @@ var MetronomeParser = function(today) {
 			var endTime = this.getTimeComponents(m[3]);
 			
 			var targetDate = (dayOfWeek == null)
-				? this.today
-				: this.today.addDays(convertToDayOfWeek(dayOfWeek) - this.today.getDay());
+				? this.now
+				: this.now.addDays(convertToDayOfWeek(dayOfWeek) - this.now.getDay());
 			
 			return new TimeEntry({
-				date: (targetDate.getMonth() + 1) + "/" + targetDate.getDate() + "/" + targetDate.getFullYear(),
+				date: formatMMDDYYYY(targetDate),
 				startHour: startTime.hour,
 				startMin: startTime.minutes,
 				endHour: endTime.hour,
@@ -49,8 +65,40 @@ var MetronomeParser = function(today) {
 			});
 		}
 
-		// M 9-915
-		m = text.match(/^([M|m|T|t|W|d|R|r|F|f) ([0-9]{1,4})-([0-9]{1,4})$/);
+		// Time given as a duration only. Use NOW as the ending time, then work backwards.
+		// Ex: 90m or 1.5h
+		m = text.match(/^([0-9]+(\.[0-9]+){0,1}) ?([m|M|h|H|hr|Hr|HR])$/);
+		if (m) {
+			var number = parseFloat(m[1]);
+			var durationType = m[3];
+			
+			var minutes = null;
+			
+			switch (durationType.toUpperCase()) {
+				case "M": 
+					minutes = number;
+					break;
+					
+				case "H":
+				case "HR":
+					minutes = number * 60;
+					break;
+					
+				default:
+					throw "Duration type '" + durationType + "' is not recognized";
+			}
+			
+			var endTime = this.now;
+			var startTime = endTime.addMinutes(minutes * -1);
+
+			return new TimeEntry({
+				date: formatMMDDYYYY(startTime),
+				startHour: startTime.getHours(),
+				startMin: padWithLeadingZeros(startTime.getMinutes(), 2),
+				endHour: endTime.getHours(),
+				endMin: padWithLeadingZeros(endTime.getMinutes(), 2)
+			});
+		}
 		
 		throw "Could not parse: " + text;
 	};

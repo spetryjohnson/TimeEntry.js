@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Metronome Time Entry Test Harness</title>
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script src="timeEntry.js"></script>
+</head>
+<body>
+	Enter a string to parse:
+	<input type="text" id="TextToParse" value="" />
+	<input type="button" value="parse" id="btnParse" /><br/>
+	
+	<div id="Results"></div>
+	
+	<hr/>
+	<b>Examples of valid input:</b>
+	<table border="1" cellspacing="0" cellpadding="2">
+		<tr>
+			<th>Input</th>
+			<th>Description</th>
+		</tr>
+		<tr>
+			<td>15m</td>
+			<td>Records a 15 minute entry, ending at the current date/time.</td>
+		</tr>
+		<tr>
+			<td>1.5h</td>
+			<td>Records a 1.5 hour entry, ending at the current date/time.</td>
+		</tr>
+		<tr>
+			<td>9-10</td>
+			<td>Records a 1 hour entry from 9:00am to 10:00am, on the current date.</td>
+		</tr>
+		<tr>
+			<td>9p-1030p</td>
+			<td>Records a 90 minute entry from 9:00pm to 10:30pm, on the current date.</td>
+		</tr>
+		<tr>
+			<td>M 9-1p</td>
+			<td>Records an entry on MONDAY of the current week, from 9:00am to 1:00pm</td>
+		</tr>
+		<tr>
+			<td>Su 8-915</td>
+			<td>Records an entry on SUNDAY of the current week, from 8:00am to 9:15am</td>
+		</tr>
+	</table>
+	
+	<script type="text/javascript">
+		$(function() {
+			$("#btnParse").on("click", function() {
+				var parser = new MetronomeParser();
+				var input = $("#TextToParse").val();
+				
+				var results = parser.parse(input);
+				
+				$("#Results").html(results.date + ": " + results.startHour + ":" + results.startMin + " - " + results.endHour + ":" + results.endMin);
+			});
+		});
+	</script>
+</body>
+</html>

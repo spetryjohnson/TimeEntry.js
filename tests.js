@@ -2,12 +2,12 @@
 	MetronomeParser.parse
 *********************************************************/
 
-//-----------------------------------------------------------------
-// When given as a range, and no date is specified, uses TODAY
-//-----------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
+// When time is given as a range, and no date is specified, uses current date
+//-------------------------------------------------------------------------------------------------
 var cases = [
-	{ today: "1/1/2014", input: "9-10", expectedDate: "1/1/2014", expectedStart: "9:00", expectedEnd: "10:00" },
-	{ today: "1/1/2014", input: "9p-10p", expectedDate: "1/1/2014", expectedStart: "21:00", expectedEnd: "22:00" }
+	{ now: "1/1/2014", input: "9-10", expectedDate: "1/1/2014", expectedStart: "9:00", expectedEnd: "10:00" },
+	{ now: "1/1/2014", input: "9p-10p", expectedDate: "1/1/2014", expectedStart: "21:00", expectedEnd: "22:00" }
 ];
 
 for(var i=0; i < cases.length; i++) {
@@ -16,7 +16,7 @@ for(var i=0; i < cases.length; i++) {
 	// to get around closure scoping in loop
 	var assertFunc = function(testCase) {
 		return function( assert ) {
-			var parser = new MetronomeParser(testCase.today);
+			var parser = new MetronomeParser(testCase.now);
 			var result = parser.parse(testCase.input);
 		
 			assert.equal(result.date, testCase.expectedDate, "Date: " + testCase.expectedDate);
@@ -25,21 +25,21 @@ for(var i=0; i < cases.length; i++) {
 		};
 	}(thisCase);
 	
-	QUnit.test("Given a date of " + thisCase.today + ", parses entry: " + thisCase.input, assertFunc);
+	QUnit.test("Given a date of " + thisCase.now + ", parses entry: " + thisCase.input, assertFunc);
 }
 
-//-----------------------------------------------------------------
-// When given as a range, and a date is specified, calculate the date according to day of week
-// The selected date for "today" is a Wednesday
-//-----------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
+// When time is given as a range, and a date is specified, calculate the date according to day of week
+// The selected date for "now" is a Wednesday
+//-------------------------------------------------------------------------------------------------
 var cases = [
-	{ today: "1/1/2014", input: "Su 9-10", expectedDate: "12/29/2013", expectedStart: "9:00", expectedEnd: "10:00" },
-	{ today: "1/1/2014", input: "M 9-10", expectedDate: "12/30/2013", expectedStart: "9:00", expectedEnd: "10:00" },
-	{ today: "1/1/2014", input: "T 9-10", expectedDate: "12/31/2013", expectedStart: "9:00", expectedEnd: "10:00" },
-	{ today: "1/1/2014", input: "W 9-10", expectedDate: "1/1/2014", expectedStart: "9:00", expectedEnd: "10:00" },
-	{ today: "1/1/2014", input: "R 9-10", expectedDate: "1/2/2014", expectedStart: "9:00", expectedEnd: "10:00" },
-	{ today: "1/1/2014", input: "F 9-10", expectedDate: "1/3/2014", expectedStart: "9:00", expectedEnd: "10:00" },
-	{ today: "1/1/2014", input: "Sa 9p-10p", expectedDate: "1/4/2014", expectedStart: "21:00", expectedEnd: "22:00" }
+	{ now: "1/1/2014", input: "Su 9-10", expectedDate: "12/29/2013", expectedStart: "9:00", expectedEnd: "10:00" },
+	{ now: "1/1/2014", input: "M 9-10", expectedDate: "12/30/2013", expectedStart: "9:00", expectedEnd: "10:00" },
+	{ now: "1/1/2014", input: "T 9-10", expectedDate: "12/31/2013", expectedStart: "9:00", expectedEnd: "10:00" },
+	{ now: "1/1/2014", input: "W 9-10", expectedDate: "1/1/2014", expectedStart: "9:00", expectedEnd: "10:00" },
+	{ now: "1/1/2014", input: "R 9-10", expectedDate: "1/2/2014", expectedStart: "9:00", expectedEnd: "10:00" },
+	{ now: "1/1/2014", input: "F 9-10", expectedDate: "1/3/2014", expectedStart: "9:00", expectedEnd: "10:00" },
+	{ now: "1/1/2014", input: "Sa 9p-10p", expectedDate: "1/4/2014", expectedStart: "21:00", expectedEnd: "22:00" }
 ];
 
 for(var i=0; i < cases.length; i++) {
@@ -48,7 +48,7 @@ for(var i=0; i < cases.length; i++) {
 	// to get around closure scoping in loop
 	var assertFunc = function(testCase) {
 		return function( assert ) {
-			var parser = new MetronomeParser(testCase.today);
+			var parser = new MetronomeParser(testCase.now);
 			var result = parser.parse(testCase.input);
 		
 			assert.equal(result.date, testCase.expectedDate, "Date: " + testCase.expectedDate);
@@ -57,16 +57,42 @@ for(var i=0; i < cases.length; i++) {
 		};
 	}(thisCase);
 	
-	QUnit.test("Given a date of " + thisCase.today + ", parses entry: " + thisCase.input, assertFunc);
+	QUnit.test("Given a date of " + thisCase.now + ", parses entry: " + thisCase.input, assertFunc);
+}
+
+//-------------------------------------------------------------------------------------------------
+// When time is given only as a duration, and no date is specified, uses NOW as the ending time
+//-------------------------------------------------------------------------------------------------
+var cases = [
+	{ now: "1/1/2014 13:00:00", input: "90m", expectedDate: "1/1/2014", expectedStart: "11:30", expectedEnd: "13:00" },
+	{ now: "1/1/2014 13:00:00", input: "1.5h", expectedDate: "1/1/2014", expectedStart: "11:30", expectedEnd: "13:00" }
+];
+
+for(var i=0; i < cases.length; i++) {
+	var thisCase = cases[i];
+	
+	// to get around closure scoping in loop
+	var assertFunc = function(testCase) {
+		return function( assert ) {
+			var parser = new MetronomeParser(testCase.now);
+			var result = parser.parse(testCase.input);
+		
+			assert.equal(result.date, testCase.expectedDate, "Date: " + testCase.expectedDate);
+			assert.equal(result.startHour + ":" + result.startMin, testCase.expectedStart, "Start Time: " + testCase.expectedStart);
+			assert.equal(result.endHour + ":" + result.endMin, testCase.expectedEnd, "End Time: " + testCase.expectedEnd);
+		};
+	}(thisCase);
+	
+	QUnit.test("Given a date/time of " + thisCase.now + ", parses entry: " + thisCase.input, assertFunc);
 }
 
 /********************************************************
 	MetronomeParser.getTimeComponents
 *********************************************************/
 
-//-----------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
 // One or two digit time with optional AM/PM designation
-//-----------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
 var cases = [
 	{ input: "9", expectedHour: "9", expectedMin: "00" },
 	{ input: "9a", expectedHour: "9", expectedMin: "00" },
@@ -106,9 +132,9 @@ for(var i=0; i < cases.length; i++) {
 	QUnit.test("Parses time: " + thisCase.input, assertFunc);
 }
 
-//-----------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
 // One or two digit hour, with minutes, and optional AM/PM designation
-//-----------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
 var cases = [
 	{ input: "915", expectedHour: "9", expectedMin: "15" },
 	{ input: "915a", expectedHour: "9", expectedMin: "15" },
